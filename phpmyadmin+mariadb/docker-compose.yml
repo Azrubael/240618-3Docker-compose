@@ -1,0 +1,46 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile_phpmyadmin
+    networks:
+      - dockercompose-frontend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - PMA_HOST=mydb
+    depends_on:
+      mydb:
+        condition: service_healthy
+    env_file:
+      - .env
+
+  mydb:
+    build:
+      context: .
+      dockerfile: Dockerfile_mariadb
+    networks:
+      - dockercompose-frontend
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    volumes:
+      - mydbdata:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MARIADB_ROOT_PASSWORD"]
+      # test: [ "CMD", "healthcheck.sh", "--connect" ]
+      interval: 10s
+      timeout: 15s
+      retries: 5
+    env_file:
+      - .env
+
+volumes:
+  mydbdata:
+
+networks:
+  dockercompose-frontend:
+    driver: bridge

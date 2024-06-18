@@ -1,0 +1,23 @@
+services:
+
+  dbdumper:
+    image: dockercompose-mydb:latest
+    networks:
+      - dockercompose-frontend
+    volumes:
+      - mydbdata:/var/lib/mysql
+      - ./task-13:/backup
+    command: bash -c "mysqldump --host mydb --user root --password=${MARIADB_ROOT_PASSWORD} --database mydb > /backup/mydb.sql"
+    # command: ["sh", "-c", "exec mysqldump -h mydb -u root -p${MYSQL_ROOT_PASSWORD} --database mydb > /backup/mydb.sql"]
+    depends_on:
+      mydb:
+        condition: service_healthy  
+    env_file:
+      - .env
+
+volumes:
+  mydbdata:
+
+networks:
+  dockercompose_dockercompose-frontend:
+    external: true
