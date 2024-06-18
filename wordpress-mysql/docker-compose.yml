@@ -1,0 +1,45 @@
+services:
+
+  my-awesome-database:
+    image: mysql:5.7
+    # container_name: my-awesome-database
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql:/var/lib/mysql
+    networks:
+      - my-awesome-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$MYSQL_ROOT_PASSWORD"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+    env_file:
+      - .env
+
+  my-awesome-wordpress:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # container_name: my-awesome-wordpress
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    networks:
+      - my-awesome-network
+    volumes:
+      - wordpress:/var/www/html
+    depends_on:
+      my-awesome-database:
+        condition: service_healthy
+    env_file:
+      - .env
+
+volumes:
+  mysql:
+  wordpress:
+
+networks:
+  my-awesome-network:
+    driver: bridge
